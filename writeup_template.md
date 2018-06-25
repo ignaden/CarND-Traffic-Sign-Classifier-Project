@@ -38,9 +38,6 @@ You're reading it! and here is a link to my [project code](https://github.com/ig
 
 #### 1. Provide a basic summary of the data set. In the code, the analysis should be done using python, numpy and/or pandas methods rather than hardcoding results manually.
 
-I used the pandas library to calculate summary statistics of the traffic
-signs data set:
-
 * The size of training set was originally 34,799 obveservations. As I describe below, I will remove some of the points for categories with excessive representation (I chose 1,100 as the maximum per group).
 
 * The size of the validation set is 4,410 observations.
@@ -90,9 +87,7 @@ def preprocess_data(X, y, norm=False, mu=None, stddev=None):
 The results became marginally better, but I still could not get 93%. 
 
 My next step was to normalise the data. The code is included in the snippet above.
-When constructing the actual data, I had to calcualte the mean and standard deviation for the training data
-and use those numbers to also scale the validation and testing data as well. It would be wrong to scale those 
-data sets using sample mean and standard deviations of those data sets.
+When constructing the actual data, I had to calcualte the mean and standard deviation for the training data and use those numbers to also scale the validation and testing data as well. It would be wrong to scale those  data sets using sample mean and standard deviations of those data sets.
 
 ```python
 # training
@@ -152,14 +147,14 @@ My final model consisted of the following layers:
 | Convolution 3x3     	| 5x5 stride, same padding, outputs 28x28x6 	|
 | RELU					|												|
 | Max pooling	      	| 2x2 stride,  outputs 14x14x6 				    |
-| Convolution 3x3	    | etc.      									|
+| Convolution 3x3	    | 1x1 stride,  outputs 10x10x16                 |
 | RELU                  |                                               | 
-| Max pooling	      	| 2x2 stride,  outputs 14x14x6 				    |
+| Max pooling	      	| 1x1 stride,  outputs 5x5x16				    |
 | Flatten               | Outputs 400                                   |
 | Fully connected		| Input = 400. Output = 120                     |
 | RELU                  |                                               |
 | Fully connected		| Input = 84. Output = 43                       |
-| Softmax				| etc.        									| 
+| Softmax				| 43        									| 
 
 
 #### 3. Describe how you trained your model. The discussion can include the type of optimizer, the batch size, number of epochs and any hyperparameters such as learning rate.

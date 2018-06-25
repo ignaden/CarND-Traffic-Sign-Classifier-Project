@@ -38,7 +38,7 @@ You're reading it! and here is a link to my [project code](https://github.com/ig
 
 #### 1. Provide a basic summary of the data set. In the code, the analysis should be done using python, numpy and/or pandas methods rather than hardcoding results manually.
 
-* The size of training set was originally 34,799 obveservations. As I describe below, I will remove some of the points for categories with excessive representation (I chose 1,100 as the maximum per group).
+* The size of training set was originally 34,799 obveservations. As I describe below, I will remove some of the points for categories with excessive representation (I chose 1,100 as the maximum per label group) to improve training.
 
 * The size of the validation set is 4,410 observations.
 
@@ -50,9 +50,12 @@ You're reading it! and here is a link to my [project code](https://github.com/ig
 
 #### 2. Include an exploratory visualization of the dataset.
 
-Here's a distribution of the number of labels represented in each category within the training set. I will 'trim' each category
+Here's a distribution of the number of labels represented in each category within the training set. From the distribution, it's quite visible that some labels are represented much more than others. The problem is that such distribution would significantly "tilt" features of the network towards those that are represented the most.
 
 ![alt text][image1]
+
+
+One of the optimisations I introduced removed observation points from data labels in excess of 1100. I have experimented with several thresholds and threhold of 1100 gave a good performance boost vs data loss tradeoff. I discuss this further below. Other, similar, approaches to make the data more evenly representative are to generate new data from existing images, but I do not perform this here since the model behaved well as is.
 
 ### Design and Test a Model Architecture
 
@@ -103,9 +106,7 @@ X_valid_p, y_valid_p = preprocess_data(X_valid, y_valid, False, n_mu, n_stddev)
 X_test_p, y_test_p   = preprocess_data(X_test, y_test, False, n_mu, n_stddev)
 ```
 
-The results did not improve significantly, and were still below the 93% threshold. My next step was to take out 
-excessively represented labels (you'll see in the code above, I used threshold of 1,100 as the maximum number of
-points in the dataset for each label). This will 
+The results did not improve significantly, and were still below the 93% threshold. My next step was to take out excessively represented labels (you'll see in the code above, I used threshold of 1,100 as the maximum number of points in the dataset for each label). As discussed above, this was done to limit effects of over-represented labels on feature training of the model.
 
 Here's the code that did the removal of excess data:
 ```python
@@ -133,8 +134,7 @@ def remove_excess (x_d, y_d, max_num=700):
     return x_d, y_d, total_removed
 ```
 
-At this point, the validation accuracy went above 93%, so I stopped the improvements. The next step would've been
-to artifically create more data so that each label is represented with more or less equivalent number of points.
+At this point, the validation accuracy went above 93%, so I stopped the improvements. The next step would've been to artifically create more data so that each label is represented with more or less equivalent number of points. Since the performance of the model was satisfactory, I left it as is.
 
 
 #### 2. Describe what your final model architecture looks like including model type, layers, layer sizes, connectivity, etc.) Consider including a diagram and/or table describing the final model.
@@ -174,7 +174,12 @@ optimizer = tf.train.AdamOptimizer(learning_rate = rate)
 training_operation = optimizer.minimize(loss_operation)
 ```
 
-I used the learning rate hyperparameter as was suggested and increased the number of Epochs to 50, as it seemed that it converged by the then.
+I used the learning rate hyperparameter as was suggested and increased the number of Epochs to 50, as it seemed that it converged by the then. For example, when I experimented with 150 epochs, it was visible that the performance improvements dropped off around 50. I was also concerned with over-fitting it, hence I left it at 50.
+
+I experimented with smaller and larger batch sizes and to my surprise, a greater batch size (1,000 and 10,000) resulted in much poorer performance. 
+With the current selection of 128, the model achieved over 93% validation accuracy within 50 epochs.
+
+The learning rate of `0.001` was recommended by the course materials - there's an obvious tradeoff between convergence and speed, and `0.001` worked well.
 
 #### 4. Describe the approach taken for finding a solution and getting the validation set accuracy to be at least 0.93. Include in the discussion the results on the training, validation and test sets and where in the code these were calculated. Your approach may have been an iterative process, in which case, outline the steps you took to get to the final solution and why you chose those steps. Perhaps your solution involved an already well known implementation or architecture. In this case, discuss why you think the architecture is suitable for the current problem.
 
@@ -182,6 +187,8 @@ My final model results were:
 * training set accuracy of 100%
 * validation set accuracy of 93.5%
 * test set accuracy of 92.2%
+
+It is correct that 100% training accuracy is indicative of overfitting, but given the good performance out of sample and the fact that I removed data points (easier to fit with less points), I am not concerned with the 100% accuracy for in-sample training data.
 
 I used the model suggested by the course materials, hence I will answer the following:
 
@@ -200,7 +207,7 @@ Here are five German traffic signs that I found on the web (note that I had to f
 ![alt text][image2] ![alt text][image3] ![alt text][image4] 
 ![alt text][image5] ![alt text][image6]
 
-The model makes a sigle error with `Stop Sign` - it's mostly likely because of the poor image quality.
+The model makes a single error with `Stop Sign` - it's mostly likely because of the poor image quality.
 
 #### 2. Discuss the model's predictions on these new traffic signs and compare the results to predicting on the test set. At a minimum, discuss what the predictions were, the accuracy on these new predictions, and compare the accuracy to the accuracy on the test set (OPTIONAL: Discuss the results in more detail as described in the "Stand Out Suggestions" part of the rubric).
 
@@ -217,17 +224,50 @@ Here are the results of the prediction:
 
 The model was able to correctly guess 4 of the 5 traffic signs, which gives an accuracy of 80%. This is slightly worse than the resulting accuracy of the actual test data, which is 92%. Of course, the sample size is small, hence the deviation.
 
+The images I found on the web were also processed to be grayscale and normalised - using the mean and standard deviation used when normalising the training data. That way there was no lookforward-bias. I haven't modified them by rotating, etc., as I don't think it would necessarily represent 'real-world' conditions. 
+
+
 #### 3. Describe how certain the model is when predicting on each of the five new images by looking at the softmax probabilities for each prediction. Provide the top 5 softmax probabilities for each image along with the sign type of each probability. (OPTIONAL: as described in the "Stand Out Suggestions" part of the rubric, visualizations can also be provided such as bar charts)
 
-The code for making predictions on my final model is located in the cell following `Predict the Sign Type for Each Image`.
+The code for making predictions on my final model is located in the cell titled `Predict the Sign Type for Each Image`.
 
 For all of the predictions, the model gave 100% for each of the predicted labels. I presume this may be the result of overfitting, but difficult to tell without further investigation.
 
-| Probability   |     Prediction	        					| 
-|:-------------:|:---------------------------------------------:| 
-| 100%          | General caution                               | 
-| 100%          | Speed limit (30km/h)                          |
-| 100%          | Right-of-way at the next intersection         |
-| 100%          | Keep left					 				    |
-| 100%          | Vehicles over 3.5 metric tons prohibited      |
+*PLEASE NOTE: the model returned 100% prediction for a label - since probabilities add up to 100%, the other labels received 0%. The cell in Jupyter Notebook `Output Top 5 Softmax Probabilities For Each Image Found on the Web` contains the printouts:
 
+```
+Image #1
+General caution :: 100.00%
+Traffic signals :: 0.00%
+Pedestrians :: 0.00%
+Road narrows on the right :: 0.00%
+No vehicles :: 0.00%
+
+Image #2
+Speed limit (30km/h) :: 100.00%
+Speed limit (50km/h) :: 0.00%
+End of speed limit (80km/h) :: 0.00%
+Speed limit (80km/h) :: 0.00%
+Speed limit (20km/h) :: 0.00%
+
+Image #3
+Right-of-way at the next intersection :: 100.00%
+Double curve :: 0.00%
+Beware of ice/snow :: 0.00%
+Pedestrians :: 0.00%
+General caution :: 0.00%
+
+Image #4
+Keep left :: 100.00%
+Turn right ahead :: 0.00%
+Go straight or left :: 0.00%
+Dangerous curve to the left :: 0.00%
+Double curve :: 0.00%
+
+Image #5
+Vehicles over 3.5 metric tons prohibited :: 100.00%
+No passing :: 0.00%
+No passing for vehicles over 3.5 metric tons :: 0.00%
+Slippery road :: 0.00%
+End of no passing by vehicles over 3.5 metric tons :: 0.00%
+```
